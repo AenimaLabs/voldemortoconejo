@@ -1,30 +1,78 @@
-const express = require('express');
+const express = require("express");
 const app = express();
-const port = 3000;
 
-app.get('/azar/:numero', (req, res) => {
-  // Extraer el parámetro "numero" de la URL de la solicitud
-  const numeroSolicitado = parseInt(req.params.numero);
+const fs = require("fs");
 
-  // Validar el número solicitado (opcional para mayor robustez)
-  if (isNaN(numeroSolicitado) || numeroSolicitado < 1 || numeroSolicitado > 3) {
-    return res.status(400).send('Número no válido. Especifique un número entre 1 y 3.');
-  }
+// Middleware para verificar si el usuario existe
+const verificarUsuario = (req, res, next) => {
+  const usuario = req.params.usuario;
+  // Lee el archivo data.json
+  fs.readFile(__dirname + "/data.json", "utf8", (err, data) => {
+    if (err) {
+      console.error("Error al leer el archivo data.json:", err);
+      return res.status(500).json({ error: "Error interno del servidor" });
+    }
+    // Parsea el contenido del archivo JSON
+    const usuarios = JSON.parse(data).usuarios;
+    // Verifica si el usuario está en la lista de usuarios
+    if (usuarios.includes(usuario)) {
+      next(); // Continúa con la siguiente función en la ruta
+    } else {
+      res.status(404).json({ error: "Usuario no encontrado" });
+    }
+  });
+};
 
-  // Generar un número aleatorio entre 1 y 3
-  const numeroAleatorio = Math.floor(Math.random() * 3) + 1;
+app.listen(3000, () => {
+  console.log("El servidor está inicializado en el puerto 3000");
+});
 
-  // Crear la respuesta en base a los números solicitado y aleatorio
-  let respuesta;
-  if (numeroSolicitado === numeroAleatorio) {
-    respuesta = `¡Felicidades! El número aleatorio es ${numeroAleatorio}, igual al que solicitaste (${numeroSolicitado}).`;
+app.use(express.static("assets"));
+
+app.get("/", (req, res) => {
+  res.sendFile(__dirname + "/index.html");
+});
+
+// Ruta que devuelve el archivo JSON de usuarios
+app.get("/abracadabra/usuarios", (req, res) => {
+  fs.readFile(__dirname + "/data.json", "utf8", (err, data) => {
+    if (err) {
+      console.error("Error al leer el archivo data.json:", err);
+      return res.status(500).json({ error: "Error interno del servidor" });
+    }
+    // Parsea el contenido del archivo JSON
+    const usuarios = JSON.parse(data).usuarios;
+    res.json({ usuarios });
+  });
+});
+
+// Ruta que utiliza el middleware para verificar el usuario
+app.get("/abracadabra/juego/:usuario", verificarUsuario, (req, res) => {
+  res.json({ mensaje: `Bienvenido al juego, ${req.params.usuario}!` });
+});
+
+// Ruta para mostrar la imagen de Conejo o Voldemort
+app.get("/abracadabra/conejo/:n", (req, res) => {
+  const n = parseInt(req.params.n);
+  const n2 = Math.floor(Math.random() * (4 - 1)) + 1;
+
+  if (n == n2) {
+    res.sendFile(`${__dirname}/assets/conejito.jpg`);
   } else {
-    respuesta = `El número aleatorio es ${numeroAleatorio}. El número que solicitaste es ${numeroSolicitado}.`;
+    res.sendFile(`${__dirname}/assets/voldemort.jpg`);
   }
-
-  res.send(respuesta);
+  console.log(`el número aleatorio es: ${n2} y el elegido fue ${n}`);
 });
 
-app.listen(port, () => {
-  console.log(`Servidor escuchando en el puerto ${port}`);
-});
+// // Paso 1
+// app.get("/azar/:numero", (req, res) => {
+//     // Paso 2
+//     const n = Math.floor(Math.random() * (4-1)) + 1;
+
+//     // Paso 3
+//     const numero = req.params.numero;
+
+//     // Paso 3
+//     numero == n
+//     ? res.send("Hoy estás de suerte ;)")
+//     : res.send("Buena suerte para la próxima...");});
