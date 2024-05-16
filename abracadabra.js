@@ -3,6 +3,8 @@ const app = express();
 
 const fs = require("fs");
 
+
+
 // Middleware para verificar si el usuario existe
 const verificarUsuario = (req, res, next) => {
   const usuario = req.params.usuario;
@@ -18,7 +20,8 @@ const verificarUsuario = (req, res, next) => {
     if (usuarios.includes(usuario)) {
       next(); // Continúa con la siguiente función en la ruta
     } else {
-      res.status(404).json({ error: "Usuario no encontrado" });
+      // res.status(404).json({ error: "Usuario no encontrado" });
+      res.sendFile(`${__dirname}/assets/who.jpeg`);
     }
   });
 };
@@ -56,13 +59,19 @@ app.get("/abracadabra/conejo/:n", (req, res) => {
   const n = parseInt(req.params.n);
   const n2 = Math.floor(Math.random() * (4 - 1)) + 1;
 
-  if (n == n2) {
+  if (n === n2) {
     res.sendFile(`${__dirname}/assets/conejito.jpg`);
   } else {
     res.sendFile(`${__dirname}/assets/voldemort.jpg`);
   }
   console.log(`el número aleatorio es: ${n2} y el elegido fue ${n}`);
 });
+
+// Middleware para manejar rutas no definidas
+app.use((req, res) => {
+  res.status(404).send("Esta página no existe");
+});
+
 
 // // Paso 1
 // app.get("/azar/:numero", (req, res) => {
